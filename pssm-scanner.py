@@ -1,5 +1,6 @@
 
 
+# Input Parser
 def parse_fasta(filepath):
     sequences = []
     prev_header = ''
@@ -26,5 +27,33 @@ def parse_fasta(filepath):
 
 
 sites = parse_fasta("MA0011.2.fasta")
-for header, sequence in sites:
-    print(header, sequence)
+
+
+# Input Validation & Normalisation
+def normalise(sequences):
+    normalised_sequences = []
+    current_sequence = ''
+
+    for header, sequence in sequences:
+        for base in sequence:
+            if not base.isspace():
+                current_sequence += base.upper()
+        normalised_sequences.append((header, current_sequence))
+        current_sequence = ''
+
+    return normalised_sequences
+
+
+def validate(sequences):
+    valid_sequences = []
+    valid_bases = "ACGT"
+
+    for header, sequence in sequences:
+        valid = True
+        for base in sequence:
+            if base not in valid_bases:
+                valid = False
+        if valid:
+            valid_sequences.append((header, sequence))
+
+    return valid_sequences
