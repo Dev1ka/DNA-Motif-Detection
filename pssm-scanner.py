@@ -1,5 +1,3 @@
-
-
 # Input Parser
 def parse_fasta(filepath):
     sequences = []
@@ -44,6 +42,9 @@ def normalise(sequences):
     return normalised_sequences
 
 
+sequences = normalise(sites)
+
+
 def validate(sequences):
     valid_sequences = []
     valid_bases = "ACGT"
@@ -57,3 +58,21 @@ def validate(sequences):
             valid_sequences.append((header, sequence))
 
     return valid_sequences
+
+
+sequences = validate(sequences)
+
+
+# Constructing Position Frequency Matrix (PFM)
+def create_pfm(sequences):
+    length = len(sequences[0][1])
+    pfm = {base: [0] * length for base in 'ACGT'}
+
+    for _, seq in sequences:
+        for i, base in enumerate(seq):
+            pfm[base][i] += 1
+
+    return pfm
+
+
+create_pfm(sequences)
