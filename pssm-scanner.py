@@ -75,4 +75,19 @@ def create_pfm(sequences):
     return pfm
 
 
-create_pfm(sequences)
+pfm = create_pfm(sequences)
+
+
+# Constructing Position Probability Matrix (PPM)
+def create_ppm(pfm, sequences, k=1.0, bg=0.25):
+    # k --> pseudo-count (Laplace smoothing) to prevent log(0) domain errors during PSSM conversion
+    # bg --> background frequency of each nucleotide in the target genome
+    num_seqs = len(sequences)
+    ppm = {}
+    for base, counts in pfm.items():
+        # Add (bg * k) to numerator and k to denominator
+        ppm[base] = [(count + bg * k) / (num_seqs + k) for count in counts]
+    return ppm
+
+
+ppm = create_ppm(pfm, sequences)
