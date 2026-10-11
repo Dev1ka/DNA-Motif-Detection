@@ -97,7 +97,11 @@ def create_ppm(pfm, sequences, k=1.0, bg=0.25):
 ppm = create_ppm(pfm, sequences)
 
 
+# Constructing Position-Specific Scoring Matrix (PSSM)
 def create_pssm(ppm):
+    """
+    Converts probability of each base into log scores
+    """
     bg_dict = {'A': 0.25, 'C': 0.25, 'G': 0.25, 'T': 0.25}
     pssm = {}
 
