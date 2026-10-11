@@ -131,7 +131,28 @@ pssm = create_pssm(ppm)
 
 
 # Motif Detection
-def scan_sequence(target_seq, pssm, threshold=None):
+def score_single_window(training_sites, pssm):
+    """
+    Calculates the PSSM log-scores for all training sites to find min threshold
+    """
+    scores = []
+
+    # Loop through every training site to score it and save to list
+    for header, motif in training_sites:
+        score = 0.0
+        for i, base in enumerate(motif.upper()):
+            score += pssm[base][i]
+        scores.append(score)
+
+    # Saves lowest score as threshold
+    min_score = min(scores)
+    return min_score
+
+
+score = score_single_window(sequences, pssm)
+
+
+def scan_sequence(target_seq, pssm, threshold):
     """
     Scans a target sequence using a PSSM and returns matching windows and scores
     """
@@ -159,4 +180,4 @@ def scan_sequence(target_seq, pssm, threshold=None):
     return results  # Outputs --> (index, window, score)
 
 
-motifs = scan_sequence(input_sequences, pssm)
+motifs = scan_sequence(input_sequences, pssm, score)
