@@ -157,3 +157,46 @@ def ppm_to_iupac(ppm, threshold=0.2):
 
 
 iupac_seq = ppm_to_iupac(ppm)
+
+
+def scan_iupac_sequence(target_seq, iupac_consensus):
+    """
+    Scans a target sequence using a sliding window and an IUPAC consensus string
+    """
+    consensus = iupac_consensus.upper()
+    motif_len = len(consensus)
+    results = []
+
+    iupac_rules = {
+        'A': {'A'}, 'C': {'C'}, 'G': {'G'}, 'T': {'T'},
+        'R': {'A', 'G'},   # Purine
+        'Y': {'C', 'T'},   # Pyrimidine
+        'S': {'G', 'C'},   # Strong
+        'W': {'A', 'T'},   # Weak
+        'K': {'G', 'T'},   # Keto
+        'M': {'A', 'C'},   # Amino
+        'N': {'A', 'C', 'G', 'T'}  # Any
+    }
+
+    # Slide the window across the target sequence
+    for i in range(len(target_seq) - motif_len + 1):
+        window = target_seq[i:i + motif_len]
+        valid_window = True
+
+        # Check each base pair position against the corresponding IUPAC character
+        for j, base in enumerate(window):
+            consensus_char = consensus[j]
+            allowed_bases = iupac_rules.get(consensus_char, {'A', 'C', 'G', 'T'})
+
+            # Handle unknown characters
+            if base not in allowed_bases:
+                valid_window = False
+                break
+
+        if valid_window:
+            results.append((i, window))
+
+    return results  # Outputs --> (index, window).
+
+
+motifs = scan_iupac_sequence(input_sequences, iupac_seq)
