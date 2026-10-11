@@ -1,3 +1,7 @@
+# Imports
+import math
+
+
 # Input Parser
 def parse_fasta(filepath):
     sequences = []
@@ -91,3 +95,18 @@ def create_ppm(pfm, sequences, k=1.0, bg=0.25):
 
 
 ppm = create_ppm(pfm, sequences)
+
+
+def create_pssm(ppm):
+    bg_dict = {'A': 0.25, 'C': 0.25, 'G': 0.25, 'T': 0.25}
+    pssm = {}
+
+    for base, probs in ppm.items():
+        bg = bg_dict[base]
+        # calculate log2(prob / bg) for each position in the list
+        pssm[base] = [math.log2(p / bg) for p in probs]
+
+    return pssm
+
+
+pssm = create_pssm(ppm)
