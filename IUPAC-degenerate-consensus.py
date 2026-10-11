@@ -1,7 +1,3 @@
-# Imports
-import math
-
-
 # Parse Gene Sequences .fna
 def parse_fna(filepath):
     with open(filepath, 'r') as f:
