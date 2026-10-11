@@ -128,3 +128,35 @@ def create_pssm(ppm):
 
 
 pssm = create_pssm(ppm)
+
+
+# Motif Detection
+def scan_sequence(target_seq, pssm, threshold=None):
+    """
+    Scans a target sequence using a PSSM and returns matching windows and scores
+    """
+    motif_len = len(next(iter(pssm.values())))  # Get motif length
+    results = []
+
+    # Initialise sliding window across gene sequence length
+    for i in range(len(target_seq) - motif_len + 1):
+        window = target_seq[i:i + motif_len]
+        score = 0.0
+        valid_window = True
+
+        # Score each base pair position inside the current window
+        for j, base in enumerate(window):
+            if base in pssm:  # Check if nucleotide exists in PSSM dictionary
+                score += pssm[base][j]  # Add log score for this base at this position
+            else:
+                valid_window = False  # Handle unknown characters
+                break
+
+        if valid_window:
+            if threshold is None or score >= threshold:
+                results.append((i, window, score))
+
+    return results  # Outputs --> (index, window, score)
+
+
+motifs = scan_sequence(input_sequences, pssm)
