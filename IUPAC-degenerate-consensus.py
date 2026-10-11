@@ -106,3 +106,54 @@ def create_ppm(pfm, sequences, k=1.0, bg=0.25):
         # Add (bg * k) to numerator and k to denominator
         ppm[base] = [(count + bg * k) / (num_seqs + k) for count in counts]
     return ppm
+
+
+ppm = create_ppm(pfm, sequences)
+
+
+# Create IUPAC
+def ppm_to_iupac(ppm, threshold=0.2):
+    """
+    Takes a PPM dictionary  and generates an IUPAC degenerate consensus sequence string
+    using a frequency threshold
+    """
+
+    # IUPAC lookup dictionary
+    iupac_mapping = {
+        ('A',): 'A',
+        ('C',): 'C',
+        ('G',): 'G',
+        ('T',): 'T',
+        ('A', 'G'): 'R',  # Purine
+        ('C', 'T'): 'Y',  # Pyrimidine
+        ('C', 'G'): 'S',  # Strong
+        ('A', 'T'): 'W',  # Weak
+        ('G', 'T'): 'K',  # Keto
+        ('A', 'C'): 'M',  # Amino
+        ('A', 'C', 'G', 'T'): 'N'  # Any
+    }
+
+    # Get motif length from the first row of PPM
+    motif_len = len(next(iter(ppm.values())))
+    consensus_chars = []
+
+    for i in range(motif_len):
+        valid_bases = []
+
+        # Check each nucleotide's probability at column position i
+        for base in ['A', 'C', 'G', 'T']:
+            if ppm[base][i] >= threshold:
+                valid_bases.append(base)
+
+        # Sort the bases alphabetically to ensure they match the lookup dict order
+        valid_bases.sort()
+        base_tuple = tuple(valid_bases)
+
+        # Assign IUPAC letter
+        consensus_char = iupac_mapping.get(base_tuple, 'N')
+        consensus_chars.append(consensus_char)
+
+    return "".join(consensus_chars)
+
+
+iupac_seq = ppm_to_iupac(ppm)
