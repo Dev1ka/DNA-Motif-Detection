@@ -131,7 +131,7 @@ pssm = create_pssm(ppm)
 
 
 # Motif Detection
-def score_single_window(training_sites, pssm):
+def calc_threshold(training_sites, pssm):
     """
     Calculates the PSSM log-scores for all training sites to find min threshold
     """
@@ -149,7 +149,7 @@ def score_single_window(training_sites, pssm):
     return min_score
 
 
-score = score_single_window(sequences, pssm)
+score = calc_threshold(sequences, pssm)
 
 
 def scan_sequence(target_seq, pssm, threshold):
