@@ -2,7 +2,21 @@
 import math
 
 
-# Input Parser
+# Parse Gene Sequences .fna
+def parse_fna(filepath):
+    with open(filepath, 'r') as f:
+        lines = f.readlines()
+
+    sequence_lines = [line.strip() for line in lines if not line.startswith('>')]
+    clean_seq = "".join(sequence_lines).upper()
+
+    return clean_seq
+
+
+input_sequences = parse_fna("gene.fna")
+
+
+# Parse Binding Sites .fasta
 def parse_fasta(filepath):
     sequences = []
     prev_header = ''
