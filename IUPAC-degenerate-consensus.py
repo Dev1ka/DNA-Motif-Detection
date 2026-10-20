@@ -1,5 +1,6 @@
 # Imports
 import time
+import argparse
 
 # Input
 parser = argparse.ArgumentParser(description="PSSM DNA motif detection")
