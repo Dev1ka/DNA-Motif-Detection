@@ -1,6 +1,17 @@
 # Imports
 import time
 
+# Input
+parser = argparse.ArgumentParser(description="PSSM DNA motif detection")
+
+parser.add_argument(
+    "-i", "--input",
+    required=True,
+    help="Path to the genome FNA file"
+)
+
+args = parser.parse_args()
+
 start_time = time.time()
 
 
@@ -15,7 +26,7 @@ def parse_fna(filepath):
     return clean_seq
 
 
-input_sequences = parse_fna("gene.fna")
+input_sequences = parse_fna(args.input)
 
 
 # Parse Binding Sites .fasta
