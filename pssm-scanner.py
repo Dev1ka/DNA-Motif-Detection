@@ -1,7 +1,21 @@
 # Imports
 import math
-
 import numpy as np
+import time
+import argparse
+
+# Input
+parser = argparse.ArgumentParser(description="PSSM DNA motif detection")
+
+parser.add_argument(
+    "-i", "--input",
+    required=True,
+    help="Path to the genome FNA file"
+)
+
+args = parser.parse_args()
+
+start_time = time.time()
 
 
 # Parse Gene Sequences .fna
@@ -15,7 +29,7 @@ def parse_fna(filepath):
     return clean_seq
 
 
-input_sequences = parse_fna("gene.fna")
+input_sequences = parse_fna(args.input)
 
 
 # Parse Binding Sites .fasta
@@ -143,53 +157,36 @@ def calc_threshold(pssm, target_p_value=0.001, precision=100):
     """
 
     bg = {'A': 0.285, 'T': 0.285, 'G': 0.215, 'C': 0.215}
-    bases = ['A', 'C', 'G', 'T']
-    scaled_pssm = []
+    bases = 'ACGT'
 
-    for pos in pssm:
-        # converts the decimal log-odds scores in one PSSM position into integers
-        scaled_pos = {base: int(round(pos[base] * precision)) for base in bases}
-        scaled_pssm.append(scaled_pos)
+    dist = np.array([1.0])  # initialise distribution with 100% probability at score 0
+    lowest = 0  # lowest possible cumulative PSSM score
 
-    min_score = sum(min(pos.values()) for pos in scaled_pssm)
-    max_score = sum(max(pos.values()) for pos in scaled_pssm)
+    for i in range(len(pssm['A'])):
+        score = {b: int(round(pssm[b][i] * precision)) for b in bases}
+        min_score, max_score = min(score.values()), max(score.values())
 
-    offset = -min_score  # gets positive value to prevent index errors later
-    score_range = max_score - min_score + 1  # total number of array indices
+        # initialise temporary array sized for the updated score range
+        new = np.zeros(len(dist) + max_score - min_score)
 
-    dist = np.zeros(score_range, dtype=float)  # initialises probability arr with 0s
-    dist[offset] = 1.0  # initialises probability distribution to 100%
+        for b in bases:
+            # calculate array index shift for the current nucleotide score
+            idx_shift = score[b] - min_score
+            new[idx_shift:idx_shift + len(dist)] += dist * bg[b]
 
-    for pos in scaled_pssm:
-        # initialises temporary arr to store updated probabilities
-        new_dist = np.zeros(score_range, dtype=float)
+        # update probability distribution & lowest possible cumulative score
+        dist, lowest = new, lowest + min_score
 
-        for index in range(score_range):
-            # update score probabilities by considering each possible nucleotide at the current position
-            if dist[index] > 0:
+    # calculates cumulative probability of getting each score or higher
+    p_values = np.cumsum(dist[::-1])[::-1]  # P(score >= lowest + i)
+    idx = np.flatnonzero(p_values <= target_p_value)  # find score indices with match probabilities at/below the target
 
-                for base in bases:
-                    base_score = pos[base]
-                    base_prob = bg[base]
-                    # calculate & store updated probability
-                    new_dist[index + base_score] += (dist[index] * base_prob)
+    if idx.size == 0:
+        # unreachable target: default to the max score
+        return (lowest + len(dist) - 1) / precision
 
-        dist = new_dist  # update probabilities
-
-    p_values = np.cumsum(dist[::-1])[::-1]  # calculate the probability of achieving each PSSM score or higher
-    # find score indices where random-match probability meets the target limit
-    valid_indices = np.where(p_values <= target_p_value)[0]
-
-    if len(valid_indices) == 0:
-        # base case: maximum possible score if no threshold meets the target probability
-        threshold_scaled = max_score
-
-    else:
-        # selects the lowest PSSM threshold that satisfies target p-value
-        threshold_scaled = valid_indices[0] - offset
-
-    threshold = threshold_scaled / precision  # converts array index back into PSSM score
-    return threshold
+    # otherwise converts selected array index into the PSSM threshold score
+    return (lowest + idx[0]) / precision
 
 
 score = calc_threshold(pssm)
@@ -224,3 +221,7 @@ def scan_sequence(target_seq, pssm, threshold):
 
 
 motifs = scan_sequence(input_sequences, pssm, score)
+end_time = time.time()
+
+print("Motifs:", motifs)
+print(f"Total time:     {end_time - start_time:.3f}s")
