@@ -1,6 +1,9 @@
 # Imports
 import math
 import numpy as np
+import time
+
+start_time = time.time()
 
 
 # Parse Gene Sequences .fna
@@ -206,3 +209,7 @@ def scan_sequence(target_seq, pssm, threshold):
 
 
 motifs = scan_sequence(input_sequences, pssm, score)
+end_time = time.time()
+
+print("Motifs:", motifs)
+print(f"Total time:     {end_time - start_time:.3f}s")

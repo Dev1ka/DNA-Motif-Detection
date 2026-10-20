@@ -1,3 +1,9 @@
+# Imports
+import time
+
+start_time = time.time()
+
+
 # Parse Gene Sequences .fna
 def parse_fna(filepath):
     with open(filepath, 'r') as f:
@@ -196,3 +202,8 @@ def scan_iupac_sequence(target_seq, iupac_consensus):
 
 
 motifs = scan_iupac_sequence(input_sequences, iupac_seq)
+
+end_time = time.time()
+
+print("Motifs:", motifs)
+print(f"Total time:     {end_time - start_time:.3f}s")
