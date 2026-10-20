@@ -100,7 +100,7 @@ pfm = create_pfm(sequences)
 def create_ppm(pfm, sequences, k=1.0):
     # k --> pseudo-count (Laplace smoothing) to prevent log(0) domain errors during PSSM conversion
     # bg --> background frequency of each nucleotide in the target genome
-    bg_freq = {'A': 28.5, 'T':28.5, 'G': 21.5, 'C':21.5}
+    bg_freq = {'A': 28.5, 'T': 28.5, 'G': 21.5, 'C': 21.5}
     num_seqs = len(sequences)
     ppm = {}
     for base, counts in pfm.items():
