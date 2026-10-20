@@ -1,6 +1,8 @@
 # Imports
 import math
 
+import numpy as np
+
 
 # Parse Gene Sequences .fna
 def parse_fna(filepath):
@@ -133,25 +135,64 @@ pssm = create_pssm(ppm)
 
 
 # Motif Detection
-def calc_threshold(training_sites, pssm):
+def calc_threshold(pssm, target_p_value=0.001, precision=100):
     """
-    Calculates the PSSM log-scores for all training sites to find min threshold
+    Calculates threshold using dynamic programming to determine
+    the probability of random DNA sequences achieving each possible score.
+    Selects a threshold based on a specified maximum false-positive probability (0.001).
     """
-    scores = []
 
-    # Loop through every training site to score it and save to list
-    for header, motif in training_sites:
-        score = 0.0
-        for i, base in enumerate(motif.upper()):
-            score += pssm[base][i]
-        scores.append(score)
+    bg = {'A': 0.285, 'T': 0.285, 'G': 0.215, 'C': 0.215}
+    bases = ['A', 'C', 'G', 'T']
+    scaled_pssm = []
 
-    # Saves lowest score as threshold
-    min_score = min(scores)
-    return min_score
+    for pos in pssm:
+        # converts the decimal log-odds scores in one PSSM position into integers
+        scaled_pos = {base: int(round(pos[base] * precision)) for base in bases}
+        scaled_pssm.append(scaled_pos)
+
+    min_score = sum(min(pos.values()) for pos in scaled_pssm)
+    max_score = sum(max(pos.values()) for pos in scaled_pssm)
+
+    offset = -min_score  # gets positive value to prevent index errors later
+    score_range = max_score - min_score + 1  # total number of array indices
+
+    dist = np.zeros(score_range, dtype=float)  # initialises probability arr with 0s
+    dist[offset] = 1.0  # initialises probability distribution to 100%
+
+    for pos in scaled_pssm:
+        # initialises temporary arr to store updated probabilities
+        new_dist = np.zeros(score_range, dtype=float)
+
+        for index in range(score_range):
+            # update score probabilities by considering each possible nucleotide at the current position
+            if dist[index] > 0:
+
+                for base in bases:
+                    base_score = pos[base]
+                    base_prob = bg[base]
+                    # calculate & store updated probability
+                    new_dist[index + base_score] += (dist[index] * base_prob)
+
+        dist = new_dist  # update probabilities
+
+    p_values = np.cumsum(dist[::-1])[::-1]  # calculate the probability of achieving each PSSM score or higher
+    # find score indices where random-match probability meets the target limit
+    valid_indices = np.where(p_values <= target_p_value)[0]
+
+    if len(valid_indices) == 0:
+        # base case: maximum possible score if no threshold meets the target probability
+        threshold_scaled = max_score
+
+    else:
+        # selects the lowest PSSM threshold that satisfies target p-value
+        threshold_scaled = valid_indices[0] - offset
+
+    threshold = threshold_scaled / precision  # converts array index back into PSSM score
+    return threshold
 
 
-score = calc_threshold(sequences, pssm)
+score = calc_threshold(pssm)
 
 
 def scan_sequence(target_seq, pssm, threshold):
